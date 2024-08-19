@@ -31,7 +31,7 @@ public class Movie {
     private List<Review> reviews;
     
     public Movie(String imdbId, String title, String releaseDate, String trailerLink, List<String> genres,
-            String poster, List<String> backDrops, List<Review> reviews) {
+            String poster, List<String> backDrops) {
         this.imdbId = imdbId;
         this.title = title;
         this.releaseDate = releaseDate;
@@ -39,7 +39,6 @@ public class Movie {
         this.genres = genres;
         this.poster = poster;
         this.backDrops = backDrops;
-        this.reviews = reviews;
     }
     
 }

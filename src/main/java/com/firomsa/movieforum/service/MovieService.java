@@ -23,12 +23,12 @@ public class MovieService {
     }
 
     public Movie addMovie(Movie movie){
-        return movieRepository.save(movie);
+        return movieRepository.insert(movie);
     }
 
-    public int deleteMovie(ObjectId id){
+    public int deleteMovie(String imdbId){
         try{
-            Movie movie = movieRepository.findById(id).get();
+            Movie movie = movieRepository.findMovieByImdbId(imdbId);
             movieRepository.delete(movie);
             return 1;
         }
@@ -36,5 +36,8 @@ public class MovieService {
             System.out.println(e.getMessage());
             return 0;
         }
+    }
+    public Movie updateMovie(Movie movie){
+        return movieRepository.save(movie);
     }
 }

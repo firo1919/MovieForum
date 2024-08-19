@@ -1,11 +1,9 @@
 package com.firomsa.movieforum.model;
 
-import java.util.List;
-
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.DocumentReference;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,12 +18,15 @@ import lombok.ToString;
 public class User {
     @Id
     private ObjectId userId;
+    private String firsName;
+    private String lastName;
     private String username;
+    @Indexed(unique = true)
     private String email;
-    @DocumentReference
-    private List<Review> reviews;
 
-    public User(String username, String email) {
+    public User(String firsName, String lastName, String username, String email) {
+        this.firsName = firsName;
+        this.lastName = lastName;
         this.username = username;
         this.email = email;
     }

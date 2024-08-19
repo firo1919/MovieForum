@@ -8,5 +8,6 @@ import com.firomsa.movieforum.model.User;
 
 @Repository
 public interface UserRepository extends MongoRepository<User, ObjectId> {
-
+    //search using email
+    public User findByEmail(String email);
 }

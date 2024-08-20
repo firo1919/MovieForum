@@ -48,6 +48,7 @@ public class MovieController {
         return new ResponseEntity<>(movieService.addMovie(movie),HttpStatus.CREATED);
     }
 
+    @SuppressWarnings("unchecked")
     @PutMapping("/{imdbId}")
     public ResponseEntity<Movie> updateMovie(@PathVariable String imdbId, @RequestBody Map<String, Object> payload) {
         Movie existingMovie = movieService.findMovie(imdbId);

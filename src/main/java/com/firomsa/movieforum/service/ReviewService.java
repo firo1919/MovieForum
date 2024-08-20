@@ -24,9 +24,15 @@ public class ReviewService {
     public List<Review> findAllReviews(){
         return reviewRepository.findAll();
     }
+
+    public List<Review> findAllReviewsByUserId(ObjectId userId){
+        return reviewRepository.findAllByUserId(userId);
+    }
+
     public Review findReview(ObjectId id){
         return reviewRepository.findById(id).get();
     }
+    
     public Review addReview(String imdbId, Review review){
         Review addedReview = reviewRepository.save(review);
         mongoTemplate.update(Movie.class)

@@ -23,17 +23,20 @@ public class User {
     private ObjectId userId;
     private String firsName;
     private String lastName;
-    private String username;
+    private String userName;
+    private String password;
     @Indexed(unique = true)
     private String email;
     @DocumentReference
     private List<Movie> watchList;
-
-    public User(String firsName, String lastName, String username, String email) {
+    public User(String firsName, String lastName, String userName, String password, String email) {
         this.firsName = firsName;
         this.lastName = lastName;
-        this.username = username;
+        this.userName = userName;
+        this.password = password;
         this.email = email;
     }
+
+    
     
 }

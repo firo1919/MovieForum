@@ -34,9 +34,9 @@ public class UserService {
     public User addUser(User user){
         return userRepository.insert(user);
     }
-    public int deleteUser(ObjectId id){
+    public int deleteUser(String email){
         try{
-            User user = userRepository.findById(id).get();
+            User user = userRepository.findByEmail(email);
             userRepository.delete(user);
             return 1;
         }
@@ -49,8 +49,8 @@ public class UserService {
         return userRepository.save(user);
     }
     
-    public User addToWatchList(String imdbId, String userId){
-        User existingUser = findUser(new ObjectId(userId));
+    public User addToWatchList(String imdbId, String email){
+        User existingUser = findUserByEMail(email);
         Movie movie = movieService.findMovie(imdbId);
         if(!existingUser.getWatchList().contains(movie)){
             existingUser.getWatchList().add(movie);
@@ -59,8 +59,8 @@ public class UserService {
         return existingUser;
     }
 
-    public User removeWatchList(String imdbId, String userId){
-        User existingUser = findUser(new ObjectId(userId));
+    public User removeWatchList(String imdbId, String email){
+        User existingUser = findUserByEMail(email);
         Movie movie = movieService.findMovie(imdbId);
         existingUser.getWatchList().remove(movie);
         return updateUser(existingUser);

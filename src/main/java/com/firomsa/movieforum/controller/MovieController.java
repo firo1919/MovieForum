@@ -27,12 +27,21 @@ public class MovieController {
 
     @GetMapping
     public ResponseEntity<List<Movie>> getMovies() {
-        return new ResponseEntity<>(movieService.findAllMovies(),HttpStatus.OK);
+        try {
+            return new ResponseEntity<>(movieService.findAllMovies(),HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        
     }
 
     @GetMapping("/{imdbId}")
     public ResponseEntity<Movie> getMovie(@PathVariable String imdbId) {
-        return new ResponseEntity<>(movieService.findMovie(imdbId),HttpStatus.OK);
+        try {
+            return new ResponseEntity<>(movieService.findMovie(imdbId),HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     @PostMapping

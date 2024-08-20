@@ -33,12 +33,20 @@ public class ReviewController {
 
     @GetMapping("/{userId}")
     public ResponseEntity<List<Review>> getReviewsByUser(@PathVariable String userId) {
-        return new ResponseEntity<>(reviewService.findAllReviewsByUserId(new ObjectId(userId)),HttpStatus.OK);
+        try {
+            return new ResponseEntity<>(reviewService.findAllReviewsByUserId(new ObjectId(userId)),HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Review> getReview(@PathVariable String id) {
-        return new ResponseEntity<>(reviewService.findReview(new ObjectId(id)),HttpStatus.OK);
+        try {
+            return new ResponseEntity<>(reviewService.findReview(new ObjectId(id)),HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     @PostMapping

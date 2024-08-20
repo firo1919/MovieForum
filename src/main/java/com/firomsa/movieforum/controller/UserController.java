@@ -3,7 +3,6 @@ package com.firomsa.movieforum.controller;
 import java.util.List;
 import java.util.Map;
 
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,43 +31,50 @@ public class UserController {
         return new ResponseEntity<>(userService.findAllUsers(),HttpStatus.OK);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<User> getUser(@PathVariable String id) {
-        return new ResponseEntity<>(userService.findUser(new ObjectId(id)),HttpStatus.OK);
-    }
-
     @GetMapping("/{email}")
     public ResponseEntity<User> getUserByEmail(@PathVariable String email) {
-        return new ResponseEntity<>(userService.findUserByEMail(email),HttpStatus.OK);
+        try {
+            return new ResponseEntity<>(userService.findUserByEMail(email),HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        
     }
 
     @PostMapping
     public ResponseEntity<User> addUser(@RequestBody Map<String, String> payload) {
-        String firsName = payload.get("firstname");
-        String lastName = payload.get("lastname");
-        String username = payload.get("username");
+        String firsName = payload.get("firstName");
+        String lastName = payload.get("lastName");
+        String username = payload.get("userName");
+        String password = payload.get("password");
         String email = payload.get("email");
-        User user = new User(firsName, lastName, username, email);
-        return new ResponseEntity<>(userService.addUser(user),HttpStatus.CREATED);
+        User user = new User(firsName, lastName, username, password,email);
+        try {
+            return new ResponseEntity<>(userService.addUser(user),HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
+        }
+        
     }
 
-    @PutMapping("/{userId}")
-    public ResponseEntity<User> updateUser(@PathVariable String userId, @RequestBody Map<String, String> payload) {
-        User existingUser = userService.findUser(new ObjectId(userId));
+    @PutMapping("/{email}")
+    public ResponseEntity<User> updateUser(@PathVariable String email, @RequestBody Map<String, String> payload) {
+        User existingUser = userService.findUserByEMail(email);
         if (existingUser == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        existingUser.setFirsName(payload.get("firstname"));
-        existingUser.setLastName(payload.get("lastname"));
-        existingUser.setUsername(payload.get("username"));
+        existingUser.setFirsName(payload.get("firstName"));
+        existingUser.setLastName(payload.get("lastName"));
+        existingUser.setUserName(payload.get("userName"));
+        existingUser.setPassword(payload.get("password"));
         existingUser.setEmail(payload.get("email"));
         User updatedUser = userService.updateUser(existingUser);
         return new ResponseEntity<>(updatedUser, HttpStatus.OK);
     }
 
-    @DeleteMapping("/{userId}")
-    public ResponseEntity<User> deleteUser(@PathVariable String userId){
-        int result = userService.deleteUser(new ObjectId(userId));
+    @DeleteMapping("/{email}")
+    public ResponseEntity<User> deleteUser(@PathVariable String email){
+        int result = userService.deleteUser(email);
         if (result == 0) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -76,12 +82,12 @@ public class UserController {
     }
 
     @DeleteMapping("/watchList")
-    public ResponseEntity<User> deleteWatchList(@RequestParam String imdbId, @RequestParam String userId){
-        return new ResponseEntity<>(userService.removeWatchList(imdbId, userId),HttpStatus.OK);
+    public ResponseEntity<User> deleteWatchList(@RequestParam String imdbId, @RequestParam String email){
+        return new ResponseEntity<>(userService.removeWatchList(imdbId, email),HttpStatus.OK);
     }
 
     @PostMapping("/watchList")
-    public ResponseEntity<User> addWatchList(@RequestParam String imdbId, @RequestParam String userId){
-        return new ResponseEntity<>(userService.addToWatchList(imdbId, userId),HttpStatus.OK);
+    public ResponseEntity<User> addWatchList(@RequestParam String imdbId, @RequestParam String email){
+        return new ResponseEntity<>(userService.addToWatchList(imdbId, email),HttpStatus.OK);
     }
 }

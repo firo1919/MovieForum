@@ -1,7 +1,7 @@
 package com.firomsa.movieforum.controller;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,9 +13,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.firomsa.movieforum.model.Movie;
+import com.firomsa.movieforum.model.Rating;
 import com.firomsa.movieforum.service.MovieService;
 
 @RestController
@@ -23,65 +25,96 @@ import com.firomsa.movieforum.service.MovieService;
 public class MovieController {
 
     @Autowired
-    private MovieService movieService;
+    private MovieService service;
 
     @GetMapping
     public ResponseEntity<List<Movie>> getMovies() {
-        try {
-            return new ResponseEntity<>(movieService.findAllMovies(),HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        
+        return new ResponseEntity<>(service.findAllMovies(),HttpStatus.OK);
     }
 
-    @GetMapping("/{imdbId}")
-    public ResponseEntity<Movie> getMovie(@PathVariable String imdbId) {
-        try {
-            return new ResponseEntity<>(movieService.findMovie(imdbId),HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    @GetMapping("/{movieId}")
+    public ResponseEntity<Movie> getMovie(@PathVariable String movieId) {
+        Optional<Movie> movie = service.findMovie(movieId);
+        if(movie.isPresent()){
+            return new ResponseEntity<>(movie.get(),HttpStatus.OK);
         }
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     @PostMapping
-    public ResponseEntity<Movie> addMovie(@RequestBody Map<String, Object> payload) {
-        String imdbId = payload.get("imdbId").toString();
-        String title = payload.get("title").toString();
-        String releaseDate = payload.get("releaseDate").toString();
-        String trailerLink = payload.get("trailerLink").toString();
-        List<String> genres =  (List<String>) payload.get("genres");
-        String poster = payload.get("poster").toString();
-        List<String> backDrops = (List<String>) payload.get("backdrops");
-        Movie movie = new Movie(imdbId, title, releaseDate, trailerLink, genres, poster, backDrops);
-        return new ResponseEntity<>(movieService.addMovie(movie),HttpStatus.CREATED);
+    public ResponseEntity<Movie> addMovie(@RequestBody Movie movie) {
+        return new ResponseEntity<>(service.addMovie(movie),HttpStatus.CREATED);
     }
 
-    @SuppressWarnings("unchecked")
-    @PutMapping("/{imdbId}")
-    public ResponseEntity<Movie> updateMovie(@PathVariable String imdbId, @RequestBody Map<String, Object> payload) {
-        Movie existingMovie = movieService.findMovie(imdbId);
-        if (existingMovie == null) {
+    @PutMapping("/{movieId}")
+    public ResponseEntity<Movie> updateMovie(@PathVariable String movieId, @RequestBody Movie movie) {
+        Optional<Movie> existingMovie = service.findMovie(movieId);
+        if (existingMovie.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        
-        existingMovie.setTitle(payload.get("title").toString());
-        existingMovie.setReleaseDate(payload.get("releaseDate").toString());
-        existingMovie.setTrailerLink(payload.get("trailerLink").toString());
-        existingMovie.setGenres((List<String>) payload.get("genres"));
-        existingMovie.setPoster(payload.get("poster").toString());
-        existingMovie.setBackDrops((List<String>) payload.get("backdrops"));
-        
-        Movie updatedMovie = movieService.updateMovie(existingMovie);
+        movie.setId(movieId);
+        Movie updatedMovie = service.updateMovie(movie);
         return new ResponseEntity<>(updatedMovie, HttpStatus.OK);
     }
 
-    @DeleteMapping("/{imdbId}")
-    public ResponseEntity<Movie> deleteMovie(@PathVariable String imdbId){
-        int result = movieService.deleteMovie(imdbId);
-        if (result == 0) {
+    @DeleteMapping("/{movieId}")
+    public ResponseEntity<Movie> deleteMovie(@PathVariable String movieId){
+        service.deleteMovie(movieId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PostMapping("/{movieId}/rating")
+    public ResponseEntity<Movie> addRating(@PathVariable String movieId,@RequestParam String userId,
+            @RequestParam int rating){
+        Optional<Movie> existingMovie = service.findMovie(movieId);
+        if (existingMovie.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(HttpStatus.OK);
+        Movie movie = existingMovie.get();
+        movie.getRatings().add(new Rating(userId, rating));
+        Movie updatedMovie = service.updateMovie(movie);
+        return new ResponseEntity<>(updatedMovie, HttpStatus.OK);
+    }
+
+    @PutMapping("/{movieId}/rating")
+    public ResponseEntity<Movie> updateRating(@PathVariable String movieId,@RequestParam String userId,
+            @RequestParam int rating){
+        Optional<Movie> existingMovie = service.findMovie(movieId);
+        if (existingMovie.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        Movie movie = existingMovie.get();
+
+        List<Rating> ratings = movie.getRatings();
+        int n = ratings.size();
+        for (int i = 0; i < n; i++) {
+            if (ratings.get(i).getUserId().equals(userId)) {
+                ratings.get(i).setRating(rating);
+            }
+        }
+        movie.setRatings(ratings);
+        movie = service.updateMovie(movie);
+        return new ResponseEntity<>(movie, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{movieId}/rating")
+    public ResponseEntity<Movie> deleteRating(@PathVariable String movieId,@RequestParam String userId){
+        Optional<Movie> existingMovie = service.findMovie(movieId);
+        if (existingMovie.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        Movie movie = existingMovie.get();
+
+        List<Rating> ratings = movie.getRatings();
+        int n = ratings.size();
+        for (int i = 0; i < n; i++) {
+            if (ratings.get(i).getUserId().equals(userId)) {
+                ratings.remove(i);
+                break;
+            }
+        }
+        movie.setRatings(ratings);
+        movie = service.updateMovie(movie);
+        return new ResponseEntity<>(movie, HttpStatus.OK);
     }
 }

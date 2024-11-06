@@ -2,11 +2,9 @@ package com.firomsa.movieforum.model;
 
 import java.util.List;
 
-import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.DocumentReference;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,23 +18,22 @@ import lombok.ToString;
 @Document(collection = "users")
 public class User {
     @Id
-    private ObjectId userId;
-    private String firsName;
+    private String userId;
+    private String firstName;
     private String lastName;
     private String userName;
     private String password;
+    private GENDER gender;
+    private List<String> favorites;
     @Indexed(unique = true)
     private String email;
-    @DocumentReference
-    private List<Movie> watchList;
-    public User(String firsName, String lastName, String userName, String password, String email) {
-        this.firsName = firsName;
+    
+    public User(String firstName, String lastName, String userName,GENDER gender, String password, String email) {
+        this.firstName = firstName;
         this.lastName = lastName;
         this.userName = userName;
         this.password = password;
+        this.gender = gender;
         this.email = email;
     }
-
-    
-    
 }

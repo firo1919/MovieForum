@@ -1,7 +1,7 @@
 package com.firomsa.movieforum.controller;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.firomsa.movieforum.model.Movie;
 import com.firomsa.movieforum.model.User;
 import com.firomsa.movieforum.service.UserService;
 
@@ -24,70 +25,103 @@ import com.firomsa.movieforum.service.UserService;
 public class UserController {
 
     @Autowired
-    private UserService userService;
+    private UserService service;
 
     @GetMapping
     public ResponseEntity<List<User>> getUsers() {
-        return new ResponseEntity<>(userService.findAllUsers(),HttpStatus.OK);
+        return new ResponseEntity<>(service.findAllUsers(),HttpStatus.OK);
     }
 
-    @GetMapping("/{email}")
+    @GetMapping("/email/{email}")
     public ResponseEntity<User> getUserByEmail(@PathVariable String email) {
-        try {
-            return new ResponseEntity<>(userService.findUserByEMail(email),HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        Optional<User> user = service.findUserByEmail(email);
+        if (user.isPresent()) {
+            return new ResponseEntity<>(user.get(),HttpStatus.OK);
         }
-        
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<User> getUser(@PathVariable String userId) {
+        Optional<User> user = service.findUser(userId);
+        if (user.isPresent()) {
+            return new ResponseEntity<>(user.get(),HttpStatus.OK);
+        }
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     @PostMapping
-    public ResponseEntity<User> addUser(@RequestBody Map<String, String> payload) {
-        String firsName = payload.get("firstName");
-        String lastName = payload.get("lastName");
-        String username = payload.get("userName");
-        String password = payload.get("password");
-        String email = payload.get("email");
-        User user = new User(firsName, lastName, username, password,email);
-        try {
-            return new ResponseEntity<>(userService.addUser(user),HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
-        }
-        
+    public ResponseEntity<User> addUser(@RequestBody User user) {
+        return new ResponseEntity<>(service.addUser(user),HttpStatus.CREATED);
     }
 
-    @PutMapping("/{email}")
-    public ResponseEntity<User> updateUser(@PathVariable String email, @RequestBody Map<String, String> payload) {
-        User existingUser = userService.findUserByEMail(email);
-        if (existingUser == null) {
+    @PutMapping("/{userId}")
+    public ResponseEntity<User> updateUser(@PathVariable String userId, @RequestBody User user) {
+        Optional<User> existingUser = service.findUser(userId);
+        if (existingUser.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        existingUser.setFirsName(payload.get("firstName"));
-        existingUser.setLastName(payload.get("lastName"));
-        existingUser.setUserName(payload.get("userName"));
-        existingUser.setPassword(payload.get("password"));
-        existingUser.setEmail(payload.get("email"));
-        User updatedUser = userService.updateUser(existingUser);
+        user.setUserId(userId);
+        User updatedUser = service.updateUser(user);
         return new ResponseEntity<>(updatedUser, HttpStatus.OK);
     }
 
-    @DeleteMapping("/{email}")
-    public ResponseEntity<User> deleteUser(@PathVariable String email){
-        int result = userService.deleteUser(email);
-        if (result == 0) {
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<User> deleteUser(@PathVariable String userId){
+        service.deleteUser(userId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @DeleteMapping("/{userId}/favorite/{movieId}")
+    public ResponseEntity<User> deleteFavorite(@PathVariable String movieId, @PathVariable String userId){
+        Optional<User> user = service.removeFromFavorites(movieId, userId);
+        if (user.isPresent()) {
+            return new ResponseEntity<>(user.get(),HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        
+    }
+
+    @PostMapping("/{userId}/favorite")
+    public ResponseEntity<User> addFavorite(@RequestParam String movieId, @PathVariable String userId){
+        Optional<User> user = service.addToFavorites(movieId, userId);
+        if (user.isPresent()) {
+            return new ResponseEntity<>(user.get(),HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    @PostMapping("/{userId}/likes")
+    public ResponseEntity<Movie> likeMovie(@PathVariable String userId, @RequestParam String movieId, @RequestParam int type){
+        if(type==0){
+            Optional<Movie> movie = service.addLikedMovie(userId, movieId);
+            if (movie.isPresent()) {
+                return new ResponseEntity<>(movie.get(),HttpStatus.OK);
+            }
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(HttpStatus.OK);
+        Optional<Movie> movie = service.removeLikedMovie(userId, movieId);
+        if (movie.isPresent()) {
+            return new ResponseEntity<>(movie.get(),HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        
     }
-
-    @DeleteMapping("/watchList")
-    public ResponseEntity<User> deleteWatchList(@RequestParam String imdbId, @RequestParam String email){
-        return new ResponseEntity<>(userService.removeWatchList(imdbId, email),HttpStatus.OK);
+    @PostMapping("/{userId}/dislikes")
+    public ResponseEntity<Movie> dislikeMovie(@PathVariable String userId, @RequestParam String movieId, @RequestParam int type){
+        if (type==0) {
+            Optional<Movie> movie = service.addDislikedMovie(userId, movieId);
+            if (movie.isPresent()) {
+                return new ResponseEntity<>(movie.get(),HttpStatus.OK);
+            }
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        Optional<Movie> movie = service.removeDislikedMovie(userId, movieId);
+        if (movie.isPresent()) {
+            return new ResponseEntity<>(movie.get(),HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        
     }
-
-    @PostMapping("/watchList")
-    public ResponseEntity<User> addWatchList(@RequestParam String imdbId, @RequestParam String email){
-        return new ResponseEntity<>(userService.addToWatchList(imdbId, email),HttpStatus.OK);
-    }
+    
 }
